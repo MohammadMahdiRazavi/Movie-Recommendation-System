@@ -20,3 +20,8 @@ algo_sim = load_pickle("../models/algo_item_item.pkl")
 uid_to_index = load_pickle("../models/uid_to_index.pkl")
 train_seen = load_pickle("../models/train_seen.pkl")
 movies_meta = pd.read_csv("../models/movies_meta.csv")
+
+
+n_items = X_items.shape[0]
+id2title = dict(zip(movies_meta["id"], movies_meta["title"]))
+id2poster = dict(zip(movies_meta["id"], movies_meta.get("poster_path", pd.Series([None]*len(movies_meta)))))
