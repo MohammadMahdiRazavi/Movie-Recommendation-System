@@ -4,22 +4,35 @@ import pandas as pd
 import streamlit as st
 
 
-def load_pickle(name):
-    with open(name, "rb") as f:
-        return pickle.load(f)
-
-
 #  load artifacts
-vectorizer = load_pickle("../models/vectorizer.pkl")
-X_items = load_pickle("../models/X_items.pkl")
-item_index = load_pickle("../models/item_index.pkl")     # tmdbId -> item_idx
-index_item = load_pickle("../models/index_item.pkl")     # item_idx -> tmdbId
-user_cb_profiles = load_pickle("../models/user_cb_profiles.pkl")
-algo_mf = load_pickle("../models/algo_mf.pkl")
-algo_sim = load_pickle("../models/algo_item_item.pkl")
-uid_to_index = load_pickle("../models/uid_to_index.pkl")
-train_seen = load_pickle("../models/train_seen.pkl")
-movies_meta = pd.read_csv("../models/movies_meta.csv")
+with open("C:/Users/victus/Desktop/my Project/Machine Learning/Movie-Recommendation-System/src/models/vectorizer.pkl", "rb") as f:
+    vectorizer = pickle.load(f)
+
+with open("C:/Users/victus/Desktop/my Project/Machine Learning/Movie-Recommendation-System/src/models/X_items.pkl", "rb") as f:
+    X_items = pickle.load(f)
+
+with open("C:/Users/victus/Desktop/my Project/Machine Learning/Movie-Recommendation-System/src/models/item_index.pkl", "rb") as f:
+    item_index = pickle.load(f)                 # tmdbId -> item_idx
+
+with open("C:/Users/victus/Desktop/my Project/Machine Learning/Movie-Recommendation-System/src/models/index_item.pkl", "rb") as f:
+    index_item = pickle.load(f)                 # item_idx -> tmdbId
+
+with open("C:/Users/victus/Desktop/my Project/Machine Learning/Movie-Recommendation-System/src/models/user_cb_profiles.pkl", "rb") as f:
+    user_cb_profiles = pickle.load(f)
+
+with open("C:/Users/victus/Desktop/my Project/Machine Learning/Movie-Recommendation-System/src/models/algo_mf.pkl", "rb") as f:
+    algo_mf = pickle.load(f)
+
+with open("C:/Users/victus/Desktop/my Project/Machine Learning/Movie-Recommendation-System/src/models/algo_item_item.pkl", "rb") as f:
+    algo_sim = pickle.load(f)
+
+with open("C:/Users/victus/Desktop/my Project/Machine Learning/Movie-Recommendation-System/src/models/uid_to_index.pkl", "rb") as f:
+    uid_to_index = pickle.load(f)
+
+with open("C:/Users/victus/Desktop/my Project/Machine Learning/Movie-Recommendation-System/src/models/train_seen.pkl", "rb") as f:
+    train_seen = pickle.load(f)
+
+movies_meta = pd.read_csv("C:/Users/victus/Desktop/my Project/Machine Learning/Movie-Recommendation-System/src/models/movies_meta.csv")
 
 
 n_items = X_items.shape[0]
@@ -104,7 +117,7 @@ with col1:
 with col2:
     k = st.slider("Top-K", 5, 30, 10, 1)
 with col3:
-    alpha = st.slider("Hybrid α (CF weight)", 0.0, 1.0, 0.6, 0.05)
+    alpha = st.slider("Hybrid α (CF weight)", 0.0, 1.0, 0.3, 0.05)
 
 method = st.radio("CF method", ["mf"] + (["item-item"] if algo_sim is not None else []), horizontal=True)
 
