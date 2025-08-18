@@ -72,3 +72,19 @@ def preds_cf(uid, k, method="mf", exclude=True):
         rec.append((mid, float(scores[iidx])))
         if len(rec) >= k: break
     return rec
+
+
+def preds_hybrid(uid, k, alpha=0.6, cf_method="mf", exclude=True):
+    cb = preds_cb(uid, k=max(k*3, 50), exclude=exclude)
+    cf = preds_cf(uid, k=max(k*3, 50), method=cf_method, exclude=exclude)
+    cb_scores = {m:s for m,s in cb}
+    cf_scores = {m:s for m,s in cf}
+    merged = set(cb_scores.keys()) | set(cf_scores.keys())
+    out = []
+    for mid in merged:
+        sc_cb = cb_scores.get(mid, 0.0)
+        sc_cf = cf_scores.get(mid, 0.0)
+        s = alpha*sc_cf + (1-alpha)*sc_cb
+        out.append((mid, s, sc_cb, sc_cf))
+    out.sort(key=lambda x: -x[1])
+    return out[:k]
