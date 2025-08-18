@@ -88,3 +88,8 @@ def preds_hybrid(uid, k, alpha=0.6, cf_method="mf", exclude=True):
         out.append((mid, s, sc_cb, sc_cf))
     out.sort(key=lambda x: -x[1])
     return out[:k]
+
+def poster_url(p):
+    if pd.isna(p) or not p: return None
+    if str(p).startswith("http"): return p
+    return "https://image.tmdb.org/t/p/w342" + str(p)
