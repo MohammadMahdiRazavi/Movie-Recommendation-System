@@ -53,7 +53,6 @@ def preds_cf(uid, k, method="mf", exclude=True):
     try:
         if method == "mf":
             for i in range(n_items):
-                # algo_mf روی Surprise trainset فیت شده؛ اینجا با uid/iid ایندکس را مستقیم فرض می‌گیریم
                 scores[i] = algo_mf.predict(str(uid_to_index.get(uid, -1)), str(i)).est
         elif method == "item-item" and algo_sim is not None:
             for i in range(n_items):
@@ -122,3 +121,15 @@ for i,(mid,score,scb,scf) in enumerate(hyb):
         pu = poster_url(id2poster.get(mid))
         if pu: st.image(pu, use_container_width=True)
         st.caption(f"score={score:.3f} · CB={scb:.3f} · CF={scf:.3f}")
+
+
+# CB only
+cb = preds_cb(uid, k=k, exclude=True)
+st.subheader("Content-Based")
+cc = st.columns(5)
+for i,(mid,score) in enumerate(cb):
+    with cc[i%5]:
+        st.markdown(f"**{id2title.get(mid, mid)}**")
+        pu = poster_url(id2poster.get(mid))
+        if pu: st.image(pu, use_container_width=True)
+        st.caption(f"CB={score:.3f}")
