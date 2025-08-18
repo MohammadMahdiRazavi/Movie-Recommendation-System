@@ -46,3 +46,29 @@ def preds_cb(uid, k, exclude=True):
         rec.append((mid, float(sims[iidx])))
         if len(rec) >= k: break
     return rec
+
+
+def preds_cf(uid, k, method="mf", exclude=True):
+    scores = np.zeros(n_items, dtype=np.float32)
+    try:
+        if method == "mf":
+            for i in range(n_items):
+                # algo_mf روی Surprise trainset فیت شده؛ اینجا با uid/iid ایندکس را مستقیم فرض می‌گیریم
+                scores[i] = algo_mf.predict(str(uid_to_index.get(uid, -1)), str(i)).est
+        elif method == "item-item" and algo_sim is not None:
+            for i in range(n_items):
+                scores[i] = algo_sim.predict(str(uid_to_index.get(uid, -1)), str(i)).est
+        else:
+            return []
+    except Exception:
+        return []
+    order = np.argsort(-scores)
+    seen = train_seen.get(uid, set()) if exclude else set()
+    rec = []
+    for iidx in order:
+        mid = index_item.get(int(iidx))
+        if mid is None: continue
+        if exclude and mid in seen: continue
+        rec.append((mid, float(scores[iidx])))
+        if len(rec) >= k: break
+    return rec
