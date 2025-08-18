@@ -27,6 +27,7 @@ id2title = dict(zip(movies_meta["id"], movies_meta["title"]))
 id2poster = dict(zip(movies_meta["id"], movies_meta.get("poster_path", pd.Series([None]*len(movies_meta)))))
 
 
+
 def preds_cb(uid, k, exclude=True):
     if uid not in uid_to_index: return []
     u_idx = uid_to_index[uid]
