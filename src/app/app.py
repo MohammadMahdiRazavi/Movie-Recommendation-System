@@ -110,3 +110,15 @@ with col3:
 method = st.radio("CF method", ["mf"] + (["item-item"] if algo_sim is not None else []), horizontal=True)
 
 st.markdown("---")
+
+
+# Hybrid
+hyb = preds_hybrid(uid, k=k, alpha=alpha, cf_method=method, exclude=True)
+st.subheader("Hybrid")
+hc = st.columns(5)
+for i,(mid,score,scb,scf) in enumerate(hyb):
+    with hc[i%5]:
+        st.markdown(f"**{id2title.get(mid, mid)}**")
+        pu = poster_url(id2poster.get(mid))
+        if pu: st.image(pu, use_container_width=True)
+        st.caption(f"score={score:.3f} · CB={scb:.3f} · CF={scf:.3f}")
