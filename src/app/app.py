@@ -133,3 +133,14 @@ for i,(mid,score) in enumerate(cb):
         pu = poster_url(id2poster.get(mid))
         if pu: st.image(pu, use_container_width=True)
         st.caption(f"CB={score:.3f}")
+
+
+cf = preds_cf(uid, k=k, method=method, exclude=True)
+st.subheader(f"Collaborative Filtering ({method})")
+fc = st.columns(5)
+for i,(mid,score) in enumerate(cf):
+    with fc[i%5]:
+        st.markdown(f"**{id2title.get(mid, mid)}**")
+        pu = poster_url(id2poster.get(mid))
+        if pu: st.image(pu, use_container_width=True)
+        st.caption(f"CF={score:.3f}")
