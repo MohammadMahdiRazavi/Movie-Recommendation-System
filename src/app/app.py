@@ -93,3 +93,20 @@ def poster_url(p):
     if pd.isna(p) or not p: return None
     if str(p).startswith("http"): return p
     return "https://image.tmdb.org/t/p/w342" + str(p)
+
+# UI
+st.set_page_config(page_title="Movie Recommender", layout="wide")
+st.title("🎬 Movie Recommender (Hybrid)")
+
+all_users = sorted(list(uid_to_index.keys()))
+col1, col2, col3 = st.columns(3)
+with col1:
+    uid = st.selectbox("User ID", options=all_users)
+with col2:
+    k = st.slider("Top-K", 5, 30, 10, 1)
+with col3:
+    alpha = st.slider("Hybrid α (CF weight)", 0.0, 1.0, 0.6, 0.05)
+
+method = st.radio("CF method", ["mf"] + (["item-item"] if algo_sim is not None else []), horizontal=True)
+
+st.markdown("---")
