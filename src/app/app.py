@@ -25,3 +25,23 @@ movies_meta = pd.read_csv("../models/movies_meta.csv")
 n_items = X_items.shape[0]
 id2title = dict(zip(movies_meta["id"], movies_meta["title"]))
 id2poster = dict(zip(movies_meta["id"], movies_meta.get("poster_path", pd.Series([None]*len(movies_meta)))))
+
+
+def preds_cb(uid, k, exclude=True):
+    if uid not in uid_to_index: return []
+    u_idx = uid_to_index[uid]
+    uvec = user_cb_profiles[u_idx, :]
+    if uvec.nnz == 0: return []
+    sims = (uvec @ X_items.T).toarray().ravel()
+    order = np.argsort(-sims)
+    seen = train_seen.get(uid, set()) if exclude else set()
+    rec = []
+    for iidx in order:
+        mid = index_item.get(int(iidx))
+        if mid is None:
+            continue
+        if exclude and mid in seen:
+            continue
+        rec.append((mid, float(sims[iidx])))
+        if len(rec) >= k: break
+    return rec
