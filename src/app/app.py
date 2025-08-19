@@ -4,7 +4,7 @@ import pandas as pd
 import streamlit as st
 
 
-#  load artifacts
+# Load artifacts
 with open("C:/Users/victus/Desktop/my Project/Machine Learning/Movie-Recommendation-System/src/models/vectorizer.pkl", "rb") as f:
     vectorizer = pickle.load(f)
 
@@ -12,10 +12,10 @@ with open("C:/Users/victus/Desktop/my Project/Machine Learning/Movie-Recommendat
     X_items = pickle.load(f)
 
 with open("C:/Users/victus/Desktop/my Project/Machine Learning/Movie-Recommendation-System/src/models/item_index.pkl", "rb") as f:
-    item_index = pickle.load(f)                 # tmdbId -> item_idx
+    item_index = pickle.load(f)  # tmdbId -> item_idx
 
 with open("C:/Users/victus/Desktop/my Project/Machine Learning/Movie-Recommendation-System/src/models/index_item.pkl", "rb") as f:
-    index_item = pickle.load(f)                 # item_idx -> tmdbId
+    index_item = pickle.load(f)  # item_idx -> tmdbId
 
 with open("C:/Users/victus/Desktop/my Project/Machine Learning/Movie-Recommendation-System/src/models/user_cb_profiles.pkl", "rb") as f:
     user_cb_profiles = pickle.load(f)
@@ -40,7 +40,7 @@ id2title = dict(zip(movies_meta["id"], movies_meta["title"]))
 id2poster = dict(zip(movies_meta["id"], movies_meta.get("poster_path", pd.Series([None]*len(movies_meta)))))
 
 
-
+# Recommender functions
 def preds_cb(uid, k, exclude=True):
     if uid not in uid_to_index: return []
     u_idx = uid_to_index[uid]
@@ -52,10 +52,8 @@ def preds_cb(uid, k, exclude=True):
     rec = []
     for iidx in order:
         mid = index_item.get(int(iidx))
-        if mid is None:
-            continue
-        if exclude and mid in seen:
-            continue
+        if mid is None: continue
+        if exclude and mid in seen: continue
         rec.append((mid, float(sims[iidx])))
         if len(rec) >= k: break
     return rec
@@ -101,59 +99,91 @@ def preds_hybrid(uid, k, alpha=0.6, cf_method="mf", exclude=True):
     out.sort(key=lambda x: -x[1])
     return out[:k]
 
+
 def poster_url(p):
     if pd.isna(p) or not p: return None
     if str(p).startswith("http"): return p
     return "https://image.tmdb.org/t/p/w342" + str(p)
+
 
 # UI
 st.set_page_config(page_title="Movie Recommender", layout="wide")
 st.title("🎬 Movie Recommender (Hybrid)")
 
 all_users = sorted(list(uid_to_index.keys()))
-col1, col2, col3 = st.columns(3)
-with col1:
-    uid = st.selectbox("User ID", options=all_users)
-with col2:
-    k = st.slider("Top-K", 5, 30, 10, 1)
-with col3:
-    alpha = st.slider("Hybrid α (CF weight)", 0.0, 1.0, 0.3, 0.05)
-
+uid = st.selectbox("User ID (leave empty for new user)", options=["<new user>"] + all_users)
+k = st.slider("Top-K", 5, 30, 10, 1)
+alpha = st.slider("Hybrid α (CF weight)", 0.0, 1.0, 0.3, 0.05)
 method = st.radio("CF method", ["mf"] + (["item-item"] if algo_sim is not None else []), horizontal=True)
 
 st.markdown("---")
 
+# Cold Start handling
+if uid == "<new user>":
+    st.warning("👤 New user detected (cold start). Please tell us your preferences:")
 
-# Hybrid
-hyb = preds_hybrid(uid, k=k, alpha=alpha, cf_method=method, exclude=True)
-st.subheader("Hybrid")
-hc = st.columns(5)
-for i,(mid,score,scb,scf) in enumerate(hyb):
-    with hc[i%5]:
-        st.markdown(f"**{id2title.get(mid, mid)}**")
-        pu = poster_url(id2poster.get(mid))
-        if pu: st.image(pu, use_container_width=True)
-        st.caption(f"score={score:.3f} · CB={scb:.3f} · CF={scf:.3f}")
+    # unique genre list
+    unique_genres = sorted(set(
+        g.strip() for gs in movies_meta["name_genres"].dropna() for g in str(gs).split(",")
+    ))
+    fav_genres = st.multiselect("Choose your favourite genres:", unique_genres)
+
+    fav_titles = st.multiselect("Or pick some favourite movies:",
+                                movies_meta["title"].dropna().unique()[:500])
+
+    recs = []
+    if fav_genres:
+        genre_mask = movies_meta["name_genres"].apply(
+            lambda g: any(gen in str(g) for gen in fav_genres)
+        )
+        recs = movies_meta[genre_mask].head(k)["id"].tolist()
+    elif fav_titles:
+        recs = movies_meta[movies_meta["title"].isin(fav_titles)].head(k)["id"].tolist()
+
+    # fallback to popularity
+    if not recs:
+        recs = movies_meta.head(k)["id"].tolist()
+
+    st.subheader("Recommendations for You")
+    cc = st.columns(5)
+    for i, mid in enumerate(recs):
+        with cc[i % 5]:
+            st.markdown(f"**{id2title.get(mid, mid)}**")
+            pu = poster_url(id2poster.get(mid))
+            if pu: st.image(pu, use_container_width=True)
 
 
-# CB only
-cb = preds_cb(uid, k=k, exclude=True)
-st.subheader("Content-Based")
-cc = st.columns(5)
-for i,(mid,score) in enumerate(cb):
-    with cc[i%5]:
-        st.markdown(f"**{id2title.get(mid, mid)}**")
-        pu = poster_url(id2poster.get(mid))
-        if pu: st.image(pu, use_container_width=True)
-        st.caption(f"CB={score:.3f}")
+# Normal flow for known users
+else:
+    # Hybrid
+    hyb = preds_hybrid(uid, k=k, alpha=alpha, cf_method=method, exclude=True)
+    st.subheader("Hybrid")
+    hc = st.columns(5)
+    for i,(mid,score,scb,scf) in enumerate(hyb):
+        with hc[i%5]:
+            st.markdown(f"**{id2title.get(mid, mid)}**")
+            pu = poster_url(id2poster.get(mid))
+            if pu: st.image(pu, use_container_width=True)
+            st.caption(f"score={score:.3f} · CB={scb:.3f} · CF={scf:.3f}")
 
+    # CB only
+    cb = preds_cb(uid, k=k, exclude=True)
+    st.subheader("Content-Based")
+    cc = st.columns(5)
+    for i,(mid,score) in enumerate(cb):
+        with cc[i%5]:
+            st.markdown(f"**{id2title.get(mid, mid)}**")
+            pu = poster_url(id2poster.get(mid))
+            if pu: st.image(pu, use_container_width=True)
+            st.caption(f"CB={score:.3f}")
 
-cf = preds_cf(uid, k=k, method=method, exclude=True)
-st.subheader(f"Collaborative Filtering ({method})")
-fc = st.columns(5)
-for i,(mid,score) in enumerate(cf):
-    with fc[i%5]:
-        st.markdown(f"**{id2title.get(mid, mid)}**")
-        pu = poster_url(id2poster.get(mid))
-        if pu: st.image(pu, use_container_width=True)
-        st.caption(f"CF={score:.3f}")
+    # CF
+    cf = preds_cf(uid, k=k, method=method, exclude=True)
+    st.subheader(f"Collaborative Filtering ({method})")
+    fc = st.columns(5)
+    for i,(mid,score) in enumerate(cf):
+        with fc[i%5]:
+            st.markdown(f"**{id2title.get(mid, mid)}**")
+            pu = poster_url(id2poster.get(mid))
+            if pu: st.image(pu, use_container_width=True)
+            st.caption(f"CF={score:.3f}")
