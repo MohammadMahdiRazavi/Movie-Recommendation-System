@@ -135,7 +135,7 @@ with col1:
     method = st.radio("CF method", ["mf"] + (["item-item"] if algo_sim is not None else []), horizontal=True)
 
 with col2:
-    k = st.slider("Top-K", 5, 30, 10, 1)
+    k = st.slider("Top-K", 5, 30, 5, 1)
 with col3:
     alpha = st.slider("Hybrid α (CF weight)", 0.0, 1.0, 0.3, 0.05)
 
