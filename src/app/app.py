@@ -163,20 +163,28 @@ if uid == "<new user>":
                 json.dump(user_prefs, f)
             st.success(f"✅ Preferences saved for {username}! Restart app and select from dropdown.")
 
-    # show fallback recs
-    st.subheader("Recommendations for New User")
-    rec_ids = recommend_popular(k)
+    recs = []
+    if fav_genres:
+        genre_mask = movies_meta["name_genres"].apply(
+            lambda g: any(gen in str(g) for gen in fav_genres)
+        )
+        recs = movies_meta[genre_mask].head(k)["id"].tolist()
+    elif fav_titles:
+        recs = movies_meta[movies_meta["title"].isin(fav_titles)].head(k)["id"].tolist()
+
+    if not recs:
+        recs = recommend_popular(k=k)
+
+    st.subheader("Recommendations for You")
     cc = st.columns(5)
-    for i, mid in enumerate(rec_ids):
-        with cc[i%5]:
+    for i, mid in enumerate(recs):
+        with cc[i % 5]:
             st.markdown(f"**{id2title.get(mid, mid)}**")
             pu = poster_url(id2poster.get(mid))
             if pu: st.image(pu, use_container_width=True)
-            st.caption(f"Genres: {id2genres.get(mid,'')}")
 
-# --------------------------
+
 # Existing users (normal recs)
-# --------------------------
 else:
     if uid in uid_to_index:   # old user
         hyb = preds_hybrid(uid, k=k, alpha=alpha, cf_method=method, exclude=True)
