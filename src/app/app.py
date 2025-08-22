@@ -41,6 +41,15 @@ n_items = X_items.shape[0]
 id2title = dict(zip(movies_meta["id"], movies_meta["title"]))
 id2poster = dict(zip(movies_meta["id"], movies_meta.get("poster_path", pd.Series([None]*len(movies_meta)))))
 id2genres = dict(zip(movies_meta["id"], movies_meta.get("name_genres", pd.Series([""]*len(movies_meta)))))
+id2overview = dict(zip(movies_meta["id"], movies_meta.get("overview", pd.Series([""]*len(movies_meta)))))
+
+
+unique_genres = sorted(set(
+        g.strip() for gs in movies_meta["name_genres"].dropna() for g in str(gs).split(",")
+    ))
+unique_titles = sorted(set(
+    t.strip() for t in movies_meta["title"].dropna()
+))
 
 
 USER_PREF_FILE = "C:/Users/victus/Desktop/my Project/Machine Learning/Movie-Recommendation-System/src/app/user_prefs.json"
@@ -127,7 +136,7 @@ st.set_page_config(page_title="Movie Recommender", layout="wide")
 st.title("🎬 Movie Recommender (Hybrid)")
 
 all_users = sorted(list(uid_to_index.keys()))
-uid = st.selectbox("User ID (leave empty for new user)", options=["<new user>"] + all_users)
+uid = st.selectbox("User ID (leave empty for new user)", options=["<new user>"] + list(user_prefs.keys()) + all_users)
 
 col1, col2, col3 = st.columns([1,1,1.5])
 
@@ -144,12 +153,6 @@ st.markdown("---")
 
 # Cold Start handling
 if uid == "<new user>":
-    unique_genres = sorted(set(
-        g.strip() for gs in movies_meta["name_genres"].dropna() for g in str(gs).split(",")
-    ))
-    unique_titles = sorted(set(
-        t.strip() for t in movies_meta["title"].dropna()
-    ))
     username = st.text_input("Choose a username")
     fav_genres = st.multiselect("Pick your favorite genres:", options=unique_genres)
     fav_titles = st.multiselect("Pick some favorite movies:", options=unique_titles)
@@ -182,59 +185,114 @@ if uid == "<new user>":
             st.markdown(f"**{id2title.get(mid, mid)}**")
             pu = poster_url(id2poster.get(mid))
             if pu: st.image(pu, use_container_width=True)
+            st.caption(id2overview.get(mid, ""))
 
 
 # Existing users (normal recs)
 else:
     if uid in uid_to_index:   # old user
-        hyb = preds_hybrid(uid, k=k, alpha=alpha, cf_method=method, exclude=True)
-        st.subheader("Hybrid")
-        hc = st.columns(5)
-        for i,(mid,score,scb,scf) in enumerate(hyb):
-            with hc[i%5]:
-                st.markdown(f"**{id2title.get(mid, mid)}**")
-                pu = poster_url(id2poster.get(mid))
-                if pu: st.image(pu, use_container_width=True)
-                st.caption(f"score={score:.3f} · CB={scb:.3f} · CF={scf:.3f}")
+        fav_genres = st.multiselect("Pick your favorite genres:", options=unique_genres)
+        fav_titles = st.multiselect("Pick some favorite movies:", options=unique_titles)
 
-        cb = preds_cb(uid, k=k, exclude=True)
-        st.subheader("Content-Based")
-        cc = st.columns(5)
-        for i,(mid,score) in enumerate(cb):
-            with cc[i%5]:
-                st.markdown(f"**{id2title.get(mid, mid)}**")
-                pu = poster_url(id2poster.get(mid))
-                if pu: st.image(pu, use_container_width=True)
-                st.caption(f"CB={score:.3f}")
+        recs = []
+        if fav_genres:
+            genre_mask = movies_meta["name_genres"].apply(
+                lambda g: any(gen in str(g) for gen in fav_genres)
+            )
+            recs = movies_meta[genre_mask].head(k)["id"].tolist()
+            st.subheader("Recommendations for You")
+            cc = st.columns(5)
+            for i, mid in enumerate(recs):
+                with cc[i % 5]:
+                    st.markdown(f"**{id2title.get(mid, mid)}**")
+                    pu = poster_url(id2poster.get(mid))
+                    if pu: st.image(pu, use_container_width=True)
+                    st.caption(id2overview.get(mid, ""))
+        elif fav_titles:
+            recs = movies_meta[movies_meta["title"].isin(fav_titles)].head(k)["id"].tolist()
+            st.subheader("Recommendations for You")
+            cc = st.columns(5)
+            for i, mid in enumerate(recs):
+                with cc[i % 5]:
+                    st.markdown(f"**{id2title.get(mid, mid)}**")
+                    pu = poster_url(id2poster.get(mid))
+                    if pu: st.image(pu, use_container_width=True)
+                    st.caption(id2overview.get(mid, ""))
+        else:
+            hyb = preds_hybrid(uid, k=k, alpha=alpha, cf_method=method, exclude=True)
+            st.subheader("Hybrid")
+            hc = st.columns(5)
+            for i, (mid, score, scb, scf) in enumerate(hyb):
+                with hc[i % 5]:
+                    st.markdown(f"**{id2title.get(mid, mid)}**")
+                    pu = poster_url(id2poster.get(mid))
+                    if pu: st.image(pu, use_container_width=True)
+                    st.caption(id2overview.get(mid, ""))
 
-        cf = preds_cf(uid, k=k, method=method, exclude=True)
-        st.subheader(f"Collaborative Filtering ({method})")
-        fc = st.columns(5)
-        for i,(mid,score) in enumerate(cf):
-            with fc[i%5]:
-                st.markdown(f"**{id2title.get(mid, mid)}**")
-                pu = poster_url(id2poster.get(mid))
-                if pu: st.image(pu, use_container_width=True)
-                st.caption(f"CF={score:.3f}")
+            cb = preds_cb(uid, k=k, exclude=True)
+            st.subheader("Content-Based")
+            cc = st.columns(5)
+            for i, (mid, score) in enumerate(cb):
+                with cc[i % 5]:
+                    st.markdown(f"**{id2title.get(mid, mid)}**")
+                    pu = poster_url(id2poster.get(mid))
+                    if pu: st.image(pu, use_container_width=True)
+
+            cf = preds_cf(uid, k=k, method=method, exclude=True)
+            st.subheader(f"Collaborative Filtering ({method})")
+            fc = st.columns(5)
+            for i, (mid, score) in enumerate(cf):
+                with fc[i % 5]:
+                    st.markdown(f"**{id2title.get(mid, mid)}**")
+                    pu = poster_url(id2poster.get(mid))
+                    if pu: st.image(pu, use_container_width=True)
+                    st.caption(id2overview.get(mid, ""))
+
 
     elif uid in user_prefs:   # new user from JSON
+        fav_genres = st.multiselect("Pick your favorite genres:", options=unique_genres)
+        fav_titles = st.multiselect("Pick some favorite movies:", options=unique_titles)
+
         st.subheader(f"Cold-start Profile: {uid}")
         prefs = user_prefs[uid]
-        st.write("Genres:", prefs["genres"])
-        st.write("Titles:", prefs["titles"])
 
+        recs = []
+        if fav_genres:
+            genre_mask = movies_meta["name_genres"].apply(
+                lambda g: any(gen in str(g) for gen in fav_genres)
+            )
+            recs = movies_meta[genre_mask].head(k)["id"].tolist()
+            st.subheader("Recommendations for You")
+            cc = st.columns(5)
+            for i, mid in enumerate(recs):
+                with cc[i % 5]:
+                    st.markdown(f"**{id2title.get(mid, mid)}**")
+                    pu = poster_url(id2poster.get(mid))
+                    if pu: st.image(pu, use_container_width=True)
+                    st.caption(id2overview.get(mid, ""))
+        elif fav_titles:
+            recs = movies_meta[movies_meta["title"].isin(fav_titles)].head(k)["id"].tolist()
+            st.subheader("Recommendations for You")
+            cc = st.columns(5)
+            for i, mid in enumerate(recs):
+                with cc[i % 5]:
+                    st.markdown(f"**{id2title.get(mid, mid)}**")
+                    pu = poster_url(id2poster.get(mid))
+                    if pu: st.image(pu, use_container_width=True)
+                    st.caption(id2overview.get(mid, ""))
         # Simple recs: match genres first, else popularity
-        mask = movies_meta["name_genres"].fillna("").apply(lambda g: any(gen in g for gen in prefs["genres"]))
-        rec_ids = movies_meta[mask]["id"].tolist()
-        if not rec_ids:
-            rec_ids = recommend_popular(k)
         else:
-            rec_ids = rec_ids[:k]
+            mask = movies_meta["name_genres"].fillna("").apply(lambda g: any(gen in g for gen in prefs["genres"]))
+            rec_ids = movies_meta[mask]["id"].tolist()
+            if not rec_ids:
+                rec_ids = recommend_popular(k)
+            else:
+                rec_ids = rec_ids[:k]
 
-        cc = st.columns(5)
-        for i, mid in enumerate(rec_ids):
-            with cc[i%5]:
-                st.markdown(f"**{id2title.get(mid, mid)}**")
-                pu = poster_url(id2poster.get(mid))
-                if pu: st.image(pu, use_container_width=True)
-                st.caption(f"Genres: {id2genres.get(mid,'')}")
+            cc = st.columns(5)
+            for i, mid in enumerate(rec_ids):
+                with cc[i % 5]:
+                    st.markdown(f"**{id2title.get(mid, mid)}**")
+                    pu = poster_url(id2poster.get(mid))
+                    if pu: st.image(pu, use_container_width=True)
+                    st.caption(id2overview.get(mid, ""))
