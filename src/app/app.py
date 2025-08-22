@@ -6,6 +6,7 @@ import json
 import os
 
 
+
 # Load artifacts
 with open("C:/Users/victus/Desktop/my Project/Machine Learning/Movie-Recommendation-System/src/models/vectorizer.pkl", "rb") as f:
     vectorizer = pickle.load(f)
