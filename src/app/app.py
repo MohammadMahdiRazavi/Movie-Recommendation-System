@@ -4,7 +4,7 @@ import pandas as pd
 import streamlit as st
 import json
 import os
-
+import requests
 
 
 # Load artifacts
@@ -126,10 +126,17 @@ def recommend_popular(k=10):
     return popular_ids[:k]
 
 
-def poster_url(p):
-    if pd.isna(p) or not p: return None
-    if str(p).startswith("http"): return p
-    return "https://image.tmdb.org/t/p/w342" + str(p)
+def poster_url(title):
+    if title:
+        url = f"http://www.omdbapi.com/?apikey=a2e7ab47&t={title}"
+        r = requests.get(url)
+        if r.status_code == 200:
+            data = r.json()
+            poster = data.get("Poster")
+            if poster and poster != "N/A":
+                return poster
+
+    return None
 
 
 # UI
@@ -184,7 +191,7 @@ if uid == "<new user>":
     for i, mid in enumerate(recs):
         with cc[i % 5]:
             st.markdown(f"**{id2title.get(mid, mid)}**")
-            pu = poster_url(id2poster.get(mid))
+            pu = poster_url(id2title.get(mid))
             if pu: st.image(pu, use_container_width=True)
             st.caption(id2overview.get(mid, ""))
 
@@ -206,7 +213,7 @@ else:
             for i, mid in enumerate(recs):
                 with cc[i % 5]:
                     st.markdown(f"**{id2title.get(mid, mid)}**")
-                    pu = poster_url(id2poster.get(mid))
+                    pu = poster_url(id2title.get(mid))
                     if pu: st.image(pu, use_container_width=True)
                     st.caption(id2overview.get(mid, ""))
         elif fav_titles:
@@ -216,7 +223,7 @@ else:
             for i, mid in enumerate(recs):
                 with cc[i % 5]:
                     st.markdown(f"**{id2title.get(mid, mid)}**")
-                    pu = poster_url(id2poster.get(mid))
+                    pu = poster_url(id2title.get(mid))
                     if pu: st.image(pu, use_container_width=True)
                     st.caption(id2overview.get(mid, ""))
         else:
@@ -226,7 +233,7 @@ else:
             for i, (mid, score, scb, scf) in enumerate(hyb):
                 with hc[i % 5]:
                     st.markdown(f"**{id2title.get(mid, mid)}**")
-                    pu = poster_url(id2poster.get(mid))
+                    pu = poster_url(id2title.get(mid))
                     if pu: st.image(pu, use_container_width=True)
                     st.caption(id2overview.get(mid, ""))
 
@@ -236,7 +243,7 @@ else:
             for i, (mid, score) in enumerate(cb):
                 with cc[i % 5]:
                     st.markdown(f"**{id2title.get(mid, mid)}**")
-                    pu = poster_url(id2poster.get(mid))
+                    pu = poster_url(id2title.get(mid))
                     if pu: st.image(pu, use_container_width=True)
 
             cf = preds_cf(uid, k=k, method=method, exclude=True)
@@ -245,7 +252,7 @@ else:
             for i, (mid, score) in enumerate(cf):
                 with fc[i % 5]:
                     st.markdown(f"**{id2title.get(mid, mid)}**")
-                    pu = poster_url(id2poster.get(mid))
+                    pu = poster_url(id2title.get(mid))
                     if pu: st.image(pu, use_container_width=True)
                     st.caption(id2overview.get(mid, ""))
 
@@ -268,7 +275,7 @@ else:
             for i, mid in enumerate(recs):
                 with cc[i % 5]:
                     st.markdown(f"**{id2title.get(mid, mid)}**")
-                    pu = poster_url(id2poster.get(mid))
+                    pu = poster_url(id2title.get(mid))
                     if pu: st.image(pu, use_container_width=True)
                     st.caption(id2overview.get(mid, ""))
         elif fav_titles:
@@ -278,7 +285,7 @@ else:
             for i, mid in enumerate(recs):
                 with cc[i % 5]:
                     st.markdown(f"**{id2title.get(mid, mid)}**")
-                    pu = poster_url(id2poster.get(mid))
+                    pu = poster_url(id2title.get(mid))
                     if pu: st.image(pu, use_container_width=True)
                     st.caption(id2overview.get(mid, ""))
         # Simple recs: match genres first, else popularity
@@ -294,6 +301,6 @@ else:
             for i, mid in enumerate(rec_ids):
                 with cc[i % 5]:
                     st.markdown(f"**{id2title.get(mid, mid)}**")
-                    pu = poster_url(id2poster.get(mid))
+                    pu = poster_url(id2title.get(mid))
                     if pu: st.image(pu, use_container_width=True)
                     st.caption(id2overview.get(mid, ""))
