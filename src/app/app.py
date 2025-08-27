@@ -8,35 +8,37 @@ import requests
 
 
 # Load artifacts
-with open("C:/Users/victus/Desktop/my Project/Machine Learning/Movie-Recommendation-System/src/models/vectorizer.pkl", "rb") as f:
+with open("../models/vectorizer.pkl", "rb") as f:
     vectorizer = pickle.load(f)
 
-with open("C:/Users/victus/Desktop/my Project/Machine Learning/Movie-Recommendation-System/src/models/X_items.pkl", "rb") as f:
+with open("../models/X_items.pkl", "rb") as f:
     X_items = pickle.load(f)
 
-with open("C:/Users/victus/Desktop/my Project/Machine Learning/Movie-Recommendation-System/src/models/item_index.pkl", "rb") as f:
+with open("../models/item_index.pkl", "rb") as f:
     item_index = pickle.load(f)  # tmdbId -> item_idx
 
-with open("C:/Users/victus/Desktop/my Project/Machine Learning/Movie-Recommendation-System/src/models/index_item.pkl", "rb") as f:
+with open("../models/index_item.pkl", "rb") as f:
     index_item = pickle.load(f)  # item_idx -> tmdbId
 
-with open("C:/Users/victus/Desktop/my Project/Machine Learning/Movie-Recommendation-System/src/models/user_cb_profiles.pkl", "rb") as f:
+with open("../models/user_cb_profiles.pkl", "rb") as f:
     user_cb_profiles = pickle.load(f)
 
-with open("C:/Users/victus/Desktop/my Project/Machine Learning/Movie-Recommendation-System/src/models/algo_mf.pkl", "rb") as f:
+with open("../models/algo_mf.pkl", "rb") as f:
     algo_mf = pickle.load(f)
 
-with open("C:/Users/victus/Desktop/my Project/Machine Learning/Movie-Recommendation-System/src/models/algo_item_item.pkl", "rb") as f:
+with open("../models/algo_item_item.pkl", "rb") as f:
     algo_sim = pickle.load(f)
 
-with open("C:/Users/victus/Desktop/my Project/Machine Learning/Movie-Recommendation-System/src/models/uid_to_index.pkl", "rb") as f:
+with open("../models/uid_to_index.pkl", "rb") as f:
     uid_to_index = pickle.load(f)
 
-with open("C:/Users/victus/Desktop/my Project/Machine Learning/Movie-Recommendation-System/src/models/train_seen.pkl", "rb") as f:
+with open("../models/train_seen.pkl", "rb") as f:
     train_seen = pickle.load(f)
 
-movies_meta = pd.read_csv("C:/Users/victus/Desktop/my Project/Machine Learning/Movie-Recommendation-System/src/models/movies_meta.csv")
+#Load csvs
+movies_meta = pd.read_csv("../models/movies_meta.csv")
 
+popular_movies = pd.read_csv("../models/movie_stats.csv")
 
 n_items = X_items.shape[0]
 id2title = dict(zip(movies_meta["id"], movies_meta["title"]))
@@ -53,12 +55,25 @@ unique_titles = sorted(set(
 ))
 
 
-USER_PREF_FILE = "C:/Users/victus/Desktop/my Project/Machine Learning/Movie-Recommendation-System/src/app/user_prefs.json"
-if os.path.exists(USER_PREF_FILE):
-    with open(USER_PREF_FILE, "r") as f:
+
+if os.path.exists("../models/user_prefs.json"):
+    with open("../models/user_prefs.json", "r") as f:
         user_prefs = json.load(f)
 else:
     user_prefs = {}
+
+
+
+#normalize function
+def normalize_scores(score_dict):
+    if not score_dict:
+        return {}
+    vals = np.array(list(score_dict.values()))
+    min_v, max_v = vals.min(), vals.max()
+    if max_v == min_v:
+        return {k: 0.5 for k in score_dict}
+    return {k: (v - min_v) / (max_v - min_v) for k,v in score_dict.items()}
+
 
 
 # Recommender functions
@@ -105,11 +120,16 @@ def preds_cf(uid, k, method="mf", exclude=True):
     return rec
 
 
-def preds_hybrid(uid, k, alpha=0.6, cf_method="mf", exclude=True):
+def preds_hybrid(uid, k, alpha=0.3, cf_method="mf", exclude=True):
     cb = preds_cb(uid, k=max(k*3, 50), exclude=exclude)
     cf = preds_cf(uid, k=max(k*3, 50), method=cf_method, exclude=exclude)
     cb_scores = {m:s for m,s in cb}
     cf_scores = {m:s for m,s in cf}
+
+    # normalize
+    cb_scores = normalize_scores(cb_scores)
+    cf_scores = normalize_scores(cf_scores)
+
     merged = set(cb_scores.keys()) | set(cf_scores.keys())
     out = []
     for mid in merged:
@@ -120,10 +140,8 @@ def preds_hybrid(uid, k, alpha=0.6, cf_method="mf", exclude=True):
     out.sort(key=lambda x: -x[1])
     return out[:k]
 
-
-def recommend_popular(k=10):
-    popular_ids = movies_meta["id"].sample(frac=1, random_state=42).tolist()  # Dummy popularity
-    return popular_ids[:k]
+def recommend_popular(k):
+    return popular_movies["tmdbId"].head(k).tolist()
 
 
 def poster_url(title):
@@ -170,7 +188,7 @@ if uid == "<new user>":
             st.error("❌ Please enter a username.")
         else:
             user_prefs[username] = {"genres": fav_genres, "titles": fav_titles}
-            with open(USER_PREF_FILE, "w") as f:
+            with open("../models/user_prefs.json", "w") as f:
                 json.dump(user_prefs, f)
             st.success(f"✅ Preferences saved for {username}! Restart app and select from dropdown.")
 
