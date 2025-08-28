@@ -8,37 +8,37 @@ import requests
 
 
 # Load artifacts
-with open("../models/vectorizer.pkl", "rb") as f:
+with open("src/models/vectorizer.pkl", "rb") as f:
     vectorizer = pickle.load(f)
 
-with open("../models/X_items.pkl", "rb") as f:
+with open("src/models/X_items.pkl", "rb") as f:
     X_items = pickle.load(f)
 
-with open("../models/item_index.pkl", "rb") as f:
+with open("src/models/item_index.pkl", "rb") as f:
     item_index = pickle.load(f)  # tmdbId -> item_idx
 
-with open("../models/index_item.pkl", "rb") as f:
+with open("src/models/index_item.pkl", "rb") as f:
     index_item = pickle.load(f)  # item_idx -> tmdbId
 
-with open("../models/user_cb_profiles.pkl", "rb") as f:
+with open("src/models/user_cb_profiles.pkl", "rb") as f:
     user_cb_profiles = pickle.load(f)
 
-with open("../models/algo_mf.pkl", "rb") as f:
+with open("src/models/algo_mf.pkl", "rb") as f:
     algo_mf = pickle.load(f)
 
-with open("../models/algo_item_item.pkl", "rb") as f:
+with open("src/models/algo_item_item.pkl", "rb") as f:
     algo_sim = pickle.load(f)
 
-with open("../models/uid_to_index.pkl", "rb") as f:
+with open("src/models/uid_to_index.pkl", "rb") as f:
     uid_to_index = pickle.load(f)
 
-with open("../models/train_seen.pkl", "rb") as f:
+with open("src/models/train_seen.pkl", "rb") as f:
     train_seen = pickle.load(f)
 
 #Load csvs
-movies_meta = pd.read_csv("../models/movies_meta.csv")
+movies_meta = pd.read_csv("src/models/movies_meta.csv")
 
-popular_movies = pd.read_csv("../models/movie_stats.csv")
+popular_movies = pd.read_csv("src/models/movie_stats.csv")
 
 n_items = X_items.shape[0]
 id2title = dict(zip(movies_meta["id"], movies_meta["title"]))
@@ -56,8 +56,8 @@ unique_titles = sorted(set(
 
 
 
-if os.path.exists("../models/user_prefs.json"):
-    with open("../models/user_prefs.json", "r") as f:
+if os.path.exists("src/models/user_prefs.json"):
+    with open("src/models/user_prefs.json", "r") as f:
         user_prefs = json.load(f)
 else:
     user_prefs = {}
@@ -188,7 +188,7 @@ if uid == "<new user>":
             st.error("❌ Please enter a username.")
         else:
             user_prefs[username] = {"genres": fav_genres, "titles": fav_titles}
-            with open("../models/user_prefs.json", "w") as f:
+            with open("src/models/user_prefs.json", "w") as f:
                 json.dump(user_prefs, f)
             st.success(f"✅ Preferences saved for {username}! Restart app and select from dropdown.")
 
