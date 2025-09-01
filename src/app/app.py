@@ -172,7 +172,7 @@ with col1:
 with col2:
     k = st.slider("Top-K", 5, 30, 5, 1)
 with col3:
-    alpha = st.slider("Hybrid α (CF weight)", 0.0, 1.0, 0.3, 0.05)
+    alpha = st.slider("Hybrid α (CF weight)", 0.0, 1.0, 0.5, 0.05)
 
 st.markdown("---")
 
