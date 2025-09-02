@@ -5,3 +5,6 @@ scikit-learn
 scipy
 requests
 scikit-surprise
+matplotlib
+seaborn
+wordcloud

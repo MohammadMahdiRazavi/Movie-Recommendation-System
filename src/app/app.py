@@ -38,7 +38,7 @@ with open("src/models/train_seen.pkl", "rb") as f:
 #Load csvs
 movies_meta = pd.read_csv("src/models/movies_meta.csv")
 
-popular_movies = pd.read_csv("src/models/movie_stats.csv")
+popular_movies = pd.read_csv("src/models/pop_candidates.csv")
 
 n_items = X_items.shape[0]
 id2title = dict(zip(movies_meta["id"], movies_meta["title"]))
@@ -141,7 +141,7 @@ def preds_hybrid(uid, k, alpha=0.3, cf_method="mf", exclude=True):
     return out[:k]
 
 def recommend_popular(k):
-    return popular_movies["tmdbId"].head(k).tolist()
+    return popular_movies["id"].head(k).tolist()
 
 
 def poster_url(title):
@@ -172,7 +172,7 @@ with col1:
 with col2:
     k = st.slider("Top-K", 5, 30, 5, 1)
 with col3:
-    alpha = st.slider("Hybrid α (CF weight)", 0.0, 1.0, 0.3, 0.05)
+    alpha = st.slider("Hybrid α (CF weight)", 0.0, 1.0, 0.5, 0.05)
 
 st.markdown("---")
 
@@ -263,6 +263,7 @@ else:
                     st.markdown(f"**{id2title.get(mid, mid)}**")
                     pu = poster_url(id2title.get(mid))
                     if pu: st.image(pu, use_container_width=True)
+                    st.caption(id2overview.get(mid, ""))
 
             cf = preds_cf(uid, k=k, method=method, exclude=True)
             st.subheader(f"Collaborative Filtering ({method})")
