@@ -97,9 +97,7 @@ The app will launch in your browser at:
 
 ---
 
-## 📸 Demo / Screenshot
-
-Example:
+## 📸 Screenshot
 
 <p align="center">
   <img src="src/report/27.png" >
