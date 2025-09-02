@@ -8,3 +8,4 @@ scikit-surprise
 matplotlib
 seaborn
 wordcloud
+joblib
