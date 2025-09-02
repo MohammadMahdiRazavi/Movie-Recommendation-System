@@ -1,4 +1,4 @@
-import pickle
+import joblib
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -8,32 +8,23 @@ import requests
 
 
 # Load artifacts
-with open("src/models/vectorizer.pkl", "rb") as f:
-    vectorizer = pickle.load(f)
+vectorizer = joblib.load("src/models/vectorizer.pkl")
 
-with open("src/models/X_items.pkl", "rb") as f:
-    X_items = pickle.load(f)
+X_items = joblib.load("src/models/X_items.pkl")
 
-with open("src/models/item_index.pkl", "rb") as f:
-    item_index = pickle.load(f)  # tmdbId -> item_idx
+item_index = joblib.load("src/models/item_index.pkl")  # tmdbId -> item_idx
 
-with open("src/models/index_item.pkl", "rb") as f:
-    index_item = pickle.load(f)  # item_idx -> tmdbId
+index_item = joblib.load("src/models/index_item.pkl")  # item_idx -> tmdbId
 
-with open("src/models/user_cb_profiles.pkl", "rb") as f:
-    user_cb_profiles = pickle.load(f)
+user_cb_profiles = joblib.load("src/models/user_cb_profiles.pkl")
 
-with open("src/models/algo_mf.pkl", "rb") as f:
-    algo_mf = pickle.load(f)
+algo_mf = joblib.load("src/models/algo_mf.pkl")
 
-with open("src/models/algo_item_item.pkl", "rb") as f:
-    algo_sim = pickle.load(f)
+algo_sim = joblib.load("src/models/algo_item_item.pkl")
 
-with open("src/models/uid_to_index.pkl", "rb") as f:
-    uid_to_index = pickle.load(f)
+uid_to_index = joblib.load("src/models/uid_to_index.pkl")
 
-with open("src/models/train_seen.pkl", "rb") as f:
-    train_seen = pickle.load(f)
+train_seen = joblib.load("src/models/train_seen.pkl")
 
 #Load csvs
 movies_meta = pd.read_csv("src/models/movies_meta.csv")
