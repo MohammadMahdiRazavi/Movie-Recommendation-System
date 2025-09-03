@@ -92,7 +92,7 @@ def preds_cf(uid, k, method="mf", exclude=True):
         if method == "mf":
             for i in range(n_items):
                 scores[i] = algo_mf.predict(str(uid_to_index.get(uid, -1)), str(i)).est
-        elif method == "item-item" and algo_sim is not None:
+        elif method == "item-item":
             for i in range(n_items):
                 scores[i] = algo_sim.predict(str(uid_to_index.get(uid, -1)), str(i)).est
         else:
@@ -111,7 +111,7 @@ def preds_cf(uid, k, method="mf", exclude=True):
     return rec
 
 
-def preds_hybrid(uid, k, alpha=0.3, cf_method="mf", exclude=True):
+def preds_hybrid(uid, k, alpha=0.5, cf_method="mf", exclude=True):
     cb = preds_cb(uid, k=max(k*3, 50), exclude=exclude)
     cf = preds_cf(uid, k=max(k*3, 50), method=cf_method, exclude=exclude)
     cb_scores = {m:s for m,s in cb}
@@ -158,7 +158,7 @@ uid = st.selectbox("User ID (leave empty for new user)", options=["<new user>"] 
 col1, col2, col3 = st.columns([1,1,1.5])
 
 with col1:
-    method = st.radio("CF method", ["mf"] + (["item-item"] if algo_sim is not None else []), horizontal=True)
+    method = st.radio("CF method", ["mf"] + ["item-item"], horizontal=True)
 
 with col2:
     k = st.slider("Top-K", 5, 30, 5, 1)
