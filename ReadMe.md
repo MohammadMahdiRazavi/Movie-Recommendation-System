@@ -115,5 +115,7 @@ The app will launch in your browser at:
 
 ---
 
+## 🌐Deployment on Hugging Face Spaces
 
+https://huggingface.co/spaces/MohammadMahdiRazavi/Movie-Recommendation-System
 
