@@ -112,8 +112,8 @@ def preds_cf(uid, k, method="mf", exclude=True):
 
 
 def preds_hybrid(uid, k, alpha=0.5, cf_method="mf", exclude=True):
-    cb = preds_cb(uid, k=k*3, exclude=exclude)
-    cf = preds_cf(uid, k=k*3, method=cf_method, exclude=exclude)
+    cb = preds_cb(uid, k=max(k*3, 50), exclude=exclude)
+    cf = preds_cf(uid, k=max(k*3, 50), method=cf_method, exclude=exclude)
     cb_scores = {m:s for m,s in cb}
     cf_scores = {m:s for m,s in cf}
 
