@@ -100,7 +100,14 @@ The app will launch in your browser at:
 ## 📸 Screenshot
 
 <p align="center">
-  <img src="src/report/27.png" >
+  <img src="src/report/1.png" width="30%">
+  <img src="src/report/2.png" width="30%">
+  <img src="src/report/3.png" width="30%">
+</p>
+<p align="center">
+  <img src="src/report/4.png" width="30%">
+  <img src="src/report/5.png" width="30%">
+  <img src="src/report/6.png" width="30%">
 </p>
 
 ---
